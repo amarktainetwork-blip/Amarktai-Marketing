@@ -1,0 +1,53 @@
+from sqlalchemy import Column, String, DateTime, Enum, Integer, Float, Boolean, JSON
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from app.db.base import Base
+import enum
+
+class PlanType(str, enum.Enum):
+    FREE = "free"
+    PRO = "pro"
+    BUSINESS = "business"
+    ENTERPRISE = "enterprise"
+
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(String, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=True)
+    avatar = Column(String, nullable=True)
+    plan = Column(Enum(PlanType), default=PlanType.FREE)
+    
+    # Usage limits and tracking
+    monthly_content_quota = Column(Integer, default=10)  # Posts per month
+    monthly_content_used = Column(Integer, default=0)
+    api_cost_budget = Column(String, default="5.00")  # Monthly AI generation budget
+    api_cost_used = Column(String, default="0.00")
+    
+    # Feature flags
+    auto_post_enabled = Column(Boolean, default=False)
+    auto_reply_enabled = Column(Boolean, default=False)
+    low_risk_auto_reply = Column(Boolean, default=False)
+    
+    # Preferences
+    preferred_language = Column(String, default="en")
+    timezone = Column(String, default="UTC")
+    notification_preferences = Column(JSON, default=dict)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    webapps = relationship("WebApp", back_populates="user", cascade="all, delete-orphan")
+    platform_connections = relationship("PlatformConnection", back_populates="user", cascade="all, delete-orphan")
+    content = relationship("Content", back_populates="user", cascade="all, delete-orphan")
+    analytics = relationship("Analytics", back_populates="user", cascade="all, delete-orphan")
+    
+    # New relationships
+    api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
+    integrations = relationship("UserIntegration", back_populates="user", cascade="all, delete-orphan")
+    engagement_replies = relationship("EngagementReply", back_populates="user", cascade="all, delete-orphan")
+    ab_tests = relationship("ABTest", back_populates="user", cascade="all, delete-orphan")
+    viral_scores = relationship("ViralScore", back_populates="user", cascade="all, delete-orphan")
+    cost_tracking = relationship("CostTracking", back_populates="user", cascade="all, delete-orphan")
